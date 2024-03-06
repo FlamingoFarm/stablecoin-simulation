@@ -5,7 +5,7 @@ import numpy as np
 
 @dataclass
 class Collateral:
-    collateral_price: float
+    price: float
 
 @dataclass
 class StabilityPool:
