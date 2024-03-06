@@ -29,8 +29,6 @@ OwnerStrategy = Enum('OwnerStrategy', [
     'ACTIVE', # characterized by maintaining an appropriate liquidation buffer
     'PASSIVE', # hands-off approach
     'RANDOM', # characterized by updating the vault randomly
-    'SIMPLE_COLL', # maintains liquidation buffer via simple collateral adjustment
-    'SIMPLE_LOAN', # maintains liquidation buffer via simple loan adjustment
     'TRADITIONAL' # risk-averse 
 ])
    
