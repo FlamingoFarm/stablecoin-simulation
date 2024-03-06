@@ -54,6 +54,10 @@ def p_vault_management(params, substep, state_history, previous_state):
     
     return {"updated_stability_pool": stability_pool, "updated_owners": owners}
                 
+                
+########################
+### Helper functions ###
+########################
 
 def modify_vault_via_active_strategy(owner, stability_pool, collateral, params):
     '''Owner tries to keep a debt to max loan ratio between 80% and 90%'''
