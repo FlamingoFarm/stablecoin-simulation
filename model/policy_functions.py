@@ -6,9 +6,7 @@ import numpy as np
 
 def p_coll_price_change(params, substep, state_history, previous_state):
     new_coll_price = jump_diffusion(previous_state["coll_price"], params)[-1]
-    return {
-        'new_coll_price': new_coll_price
-    }
+    return {"new_coll_price": new_coll_price}
 
 
 def p_liquidation(params, substep, state_history, previous_state):
@@ -17,66 +15,86 @@ def p_liquidation(params, substep, state_history, previous_state):
     collateral = previous_state["collateral"]
 
     liquidation_ratio = params["liquidation_ratio"]
-    
+
     stability_pool_balance = stability_pool.stable_coin_balance
 
     for owner in owners:
-        if owner.vault.debt_balance / (owner.vault.collateral_balance * collateral.price) > liquidation_ratio:
+        if (
+            owner.vault.debt_balance
+            / (owner.vault.collateral_balance * collateral.price)
+            > liquidation_ratio
+        ):
             owner.vault.blocked = True
             if stability_pool_balance >= owner.vault.debt_balance:
                 stability_pool_balance -= owner.vault.debt_balance
                 owner.vault.debt_balance = 0
                 owner.vault.collateral_balance = 0
-    
-    delta_stability_pool_balance = stability_pool_balance - stability_pool.stable_coin_balance
 
-    return {"delta_stability_pool_balance": delta_stability_pool_balance, "updated_owners": owners}
+    delta_stability_pool_balance = (
+        stability_pool_balance - stability_pool.stable_coin_balance
+    )
+
+    return {
+        "delta_stability_pool_balance": delta_stability_pool_balance,
+        "updated_owners": owners,
+    }
 
 
 def p_vault_management(params, substep, state_history, previous_state):
     owners = previous_state["owners"]
     stability_pool = previous_state["stability_pool"]
-    collateral = previous_state["collateral"] 
-    
+    collateral = previous_state["collateral"]
+
     for owner in owners:
         if not owner.blocked:
             match owner.strategy:
                 case OwnerStrategy.RISKY:
-                    modify_vault_via_active_strategy(owner, stability_pool, collateral, params, 0.8, 0.9)
+                    modify_vault_via_active_strategy(
+                        owner, stability_pool, collateral, params, 0.8, 0.9
+                    )
                 case OwnerStrategy.PASSIVE:
                     pass
                 case OwnerStrategy.RANDOM:
-                    modify_vault_via_random_strategy(owner, stability_pool, collateral, params)
+                    modify_vault_via_random_strategy(
+                        owner, stability_pool, collateral, params
+                    )
                 case OwnerStrategy.SAFE:
-                    modify_vault_via_active_strategy(owner, stability_pool, collateral, params, 0.4, 0.6)
+                    modify_vault_via_active_strategy(
+                        owner, stability_pool, collateral, params, 0.4, 0.6
+                    )
                 case _:
                     raise ValueError("Not a valid strategy")
-    
+
     return {"updated_stability_pool": stability_pool, "updated_owners": owners}
-                
-                
+
+
 ########################
 ### Helper functions ###
 ########################
 
-def modify_vault_via_active_strategy(owner, stability_pool, collateral, params, lower, upper):
-    '''Owner tries to keep a debt to max loan ratio between lower and upper'''
-    liquidation_ratio = params["liquidation_ratio"]
-    max_loan = (liquidation_ratio * owner.vault.collateral_balance * collateral.price)
-    debt_ratio = owner.vault.debt_balance / max_loan
-    middle = (lower + upper)/2
 
-    # Repay loan and if there is not enough stable coin in wallet, add collateral 
+def modify_vault_via_active_strategy(
+    owner, stability_pool, collateral, params, lower, upper
+):
+    """Owner tries to keep a debt to max loan ratio between lower and upper"""
+    liquidation_ratio = params["liquidation_ratio"]
+    max_loan = liquidation_ratio * owner.vault.collateral_balance * collateral.price
+    debt_ratio = owner.vault.debt_balance / max_loan
+    middle = (lower + upper) / 2
+
+    # Repay loan and if there is not enough stable coin in wallet, add collateral
     if debt_ratio > upper:
         # Calculates the amount of loan repayment to get a debt ratio of middle
         loan_repayment = owner.vault.debt_balance - middle * max_loan
 
-        if loan_repayment > owner.wallet.stable_coin_balance:  
+        if loan_repayment > owner.wallet.stable_coin_balance:
             owner.vault.debt_balance -= owner.wallet.stable_coin_balance
             owner.wallet.stable_coin_balance = 0
 
             # Calculates the amount of collateral that needs to be added to get a debt ratio of middle
-            add_collateral_amount = (owner.vault.debt_balance / middle - max_loan) / (liquidation_ratio * collateral.price)
+            add_collateral_amount = (owner.vault.debt_balance / middle - max_loan) / (
+                liquidation_ratio * collateral.price
+            )
             if add_collateral_amount > owner.wallet.collateral_balance:
                 owner.vault.collateral_balance += owner.wallet.collateral_balance
                 owner.wallet.collateral_balance = 0
@@ -98,33 +116,38 @@ def modify_vault_via_active_strategy(owner, stability_pool, collateral, params, 
             borrow_amount = middle * max_loan - owner.vault.debt_balance
 
             fee_amount = params["stability_fee"] * borrow_amount
-            spending_amount = (borrow_amount - fee_amount) * (0.2 + 0.5 * np.random.random())
+            spending_amount = (borrow_amount - fee_amount) * (
+                0.2 + 0.5 * np.random.random()
+            )
 
             stability_pool.stable_coin_balance += fee_amount + spending_amount
             owner.vault.debt_balance += borrow_amount
-            owner.wallet.stable_coin_balance += borrow_amount - fee_amount - spending_amount
-            owner.wallet.collateral_balance += spending_amount/collateral.price
+            owner.wallet.stable_coin_balance += (
+                borrow_amount - fee_amount - spending_amount
+            )
+            owner.wallet.collateral_balance += spending_amount / collateral.price
 
         # Remove collateral
         else:
             # Calculates the amount of collateral that can to be removed to get a debt ratio of 85%
-            removing_collateral = (max_loan - owner.vault.debt_balance / middle ) / (liquidation_ratio * collateral.price)
+            removing_collateral = (max_loan - owner.vault.debt_balance / middle) / (
+                liquidation_ratio * collateral.price
+            )
             owner.vault.collateral_balance -= removing_collateral
             owner.wallet.collateral_balance += removing_collateral
-            
-    
+
 
 def modify_vault_via_random_strategy(owner, stability_pool, collateral, params):
     liquidation_ratio = params["liquidation_ratio"]
-    max_loan = (liquidation_ratio * owner.vault.collateral_balance * collateral.price)
+    max_loan = liquidation_ratio * owner.vault.collateral_balance * collateral.price
 
     # Take more loan
-    if (np.random.random() < 0.5):
+    if np.random.random() < 0.5:
         borrow_amount = 0.8 * np.random.random() * (max_loan - owner.vault.debt_balance)
         fee_amount = params["stability_fee"] * borrow_amount
 
         stability_pool.stable_coin_balance += fee_amount
-        owner.vault.debt_balance += borrow_amount 
+        owner.vault.debt_balance += borrow_amount
         owner.wallet.stable_coin_balance += borrow_amount - fee_amount
     # Repay part of loan
     else:
@@ -135,4 +158,3 @@ def modify_vault_via_random_strategy(owner, stability_pool, collateral, params):
         else:
             owner.vault.debt_position -= owner.wallet.stable_coin_balance
             owner.wallet.stable_coin_balance = 0
-

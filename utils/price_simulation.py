@@ -1,7 +1,8 @@
 import numpy as np
 
-def jump_diffusion(S, params, seed=None, num_paths=1, timesteps=1, delta_t=1/365):
-    '''
+
+def jump_diffusion(S, params, seed=None, num_paths=1, timesteps=1, delta_t=1 / 365):
+    """
     Monte Carlo simulation of Merton's Jump Diffusion Model.
     The model is specified through the stochastic differential equation (SDE):
 
@@ -42,7 +43,7 @@ def jump_diffusion(S, params, seed=None, num_paths=1, timesteps=1, delta_t=1/365
     [2] Merton, R.C. (1976): 'Option Pricing when Underlying Stock Returns are
         Discontinuous', Journal of Financial Economics, 3:125-144.
     [3] https://github.com/federicomariamassari/financial-engineering
-    '''
+    """
 
     mu = params["coll_price_drift"]
     sigma = params["coll_price_vol"]
@@ -50,15 +51,15 @@ def jump_diffusion(S, params, seed=None, num_paths=1, timesteps=1, delta_t=1/365
     a = params["jump_param_a"]
     b = params["jump_param_b"]
 
-    print(f'lambda: {lam}')
+    print(f"lambda: {lam}")
 
     # Set random seed
     np.random.seed(seed)
 
-    simulated_paths = np.zeros([num_paths, timesteps+1])
-    simulated_paths[:,0] = S
+    simulated_paths = np.zeros([num_paths, timesteps + 1])
+    simulated_paths[:, 0] = S
 
-    '''
+    """
     To account for the multiple sources of uncertainty in the jump diffusion
     process, generate three arrays of random variables.
 
@@ -68,17 +69,18 @@ def jump_diffusion(S, params, seed=None, num_paths=1, timesteps=1, delta_t=1/365
        the former (a Poisson process with intensity Lambda) causes the asset
        price to jump randomly (random timing); the latter (a Gaussian variable)
        defines both the direction (sign) and intensity (magnitude) of the jump.
-    '''
+    """
     Z_1 = np.random.normal(size=[num_paths, timesteps])
     Z_2 = np.random.normal(size=[num_paths, timesteps])
-    Poisson = np.random.poisson(lam*delta_t, [num_paths, timesteps])
+    Poisson = np.random.poisson(lam * delta_t, [num_paths, timesteps])
 
     # Populate the matrix with Nsim randomly generated paths of length Nsteps
     for i in range(timesteps):
-        simulated_paths[:,i+1] = simulated_paths[:,i]*np.exp((mu - sigma**2/2)*delta_t + sigma*np.sqrt(delta_t) * Z_1[:,i] 
-                                                             + a*Poisson[:,i] + b*np.sqrt(Poisson[:,i]) * Z_2[:,i])
-        
+        simulated_paths[:, i + 1] = simulated_paths[:, i] * np.exp(
+            (mu - sigma**2 / 2) * delta_t
+            + sigma * np.sqrt(delta_t) * Z_1[:, i]
+            + a * Poisson[:, i]
+            + b * np.sqrt(Poisson[:, i]) * Z_2[:, i]
+        )
+
     return simulated_paths.squeeze()
-
-
-
