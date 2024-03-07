@@ -33,10 +33,10 @@ class Wallet:
 OwnerStrategy = Enum(
     "OwnerStrategy",
     [
-        "RISKY",  # characterized by maintaining an appropriate liquidation buffer
-        "PASSIVE",  # hands-off approach
-        "RANDOM",  # characterized by updating the vault randomly
-        "SAFE",  # risk-averse
+        "RISKY",
+        "PASSIVE",
+        "IRRATIONAL",
+        "RISK_AVERSE",
     ],
 )
 

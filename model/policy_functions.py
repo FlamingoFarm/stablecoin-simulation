@@ -4,9 +4,9 @@ from utils.price_simulation import jump_diffusion
 import numpy as np
 
 
-def p_coll_price_change(params, substep, state_history, previous_state):
-    new_coll_price = jump_diffusion(previous_state["coll_price"], params)[-1]
-    return {"new_coll_price": new_coll_price}
+def p_coll_price(params, substep, state_history, previous_state):
+    updated_coll_price = jump_diffusion(previous_state["coll_price"], params)[-1]
+    return {"updated_coll_price": updated_coll_price}
 
 
 def p_liquidation(params, substep, state_history, previous_state):
@@ -30,12 +30,8 @@ def p_liquidation(params, substep, state_history, previous_state):
                 owner.vault.debt_balance = 0
                 owner.vault.collateral_balance = 0
 
-    delta_stability_pool_balance = (
-        stability_pool_balance - stability_pool.stable_coin_balance
-    )
-
     return {
-        "delta_stability_pool_balance": delta_stability_pool_balance,
+        "updated_stability_pool_balance": stability_pool_balance,
         "updated_owners": owners,
     }
 
@@ -54,11 +50,11 @@ def p_vault_management(params, substep, state_history, previous_state):
                     )
                 case OwnerStrategy.PASSIVE:
                     pass
-                case OwnerStrategy.RANDOM:
-                    modify_vault_via_random_strategy(
+                case OwnerStrategy.IRRATIONAL:
+                    modify_vault_via_irrational_strategy(
                         owner, stability_pool, collateral, params
                     )
-                case OwnerStrategy.SAFE:
+                case OwnerStrategy.RISK_AVERSE:
                     modify_vault_via_active_strategy(
                         owner, stability_pool, collateral, params, 0.4, 0.6
                     )
@@ -137,7 +133,7 @@ def modify_vault_via_active_strategy(
             owner.wallet.collateral_balance += removing_collateral
 
 
-def modify_vault_via_random_strategy(owner, stability_pool, collateral, params):
+def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, params):
     liquidation_ratio = params["liquidation_ratio"]
     max_loan = liquidation_ratio * owner.vault.collateral_balance * collateral.price
 
