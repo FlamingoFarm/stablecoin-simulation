@@ -112,7 +112,7 @@ def modify_vault_via_active_strategy(
 
         # Take more loan
         if np.random.random() < borrow_propability:
-            # Calculates the amount of how much loan can be taken to get a debt ratio of 85%
+            # Calculates the amount of how much loan can be taken to get a debt ratio of middle
             borrow_amount = middle * max_loan - owner.vault.debt_balance
 
             fee_amount = params["stability_fee"] * borrow_amount
@@ -129,7 +129,7 @@ def modify_vault_via_active_strategy(
 
         # Remove collateral
         else:
-            # Calculates the amount of collateral that can to be removed to get a debt ratio of 85%
+            # Calculates the amount of collateral that can to be removed to get a debt ratio of middle
             removing_collateral = (max_loan - owner.vault.debt_balance / middle) / (
                 liquidation_ratio * collateral.price
             )
