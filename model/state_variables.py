@@ -26,10 +26,10 @@ class Wallet:
     stable_coin_balance: float
 
 OwnerStrategy = Enum('OwnerStrategy', [
-    'ACTIVE', # characterized by maintaining an appropriate liquidation buffer
+    'RISKY', # characterized by maintaining an appropriate liquidation buffer
     'PASSIVE', # hands-off approach
     'RANDOM', # characterized by updating the vault randomly
-    'TRADITIONAL' # risk-averse 
+    'SAFE' # risk-averse 
 ])
    
 @dataclass
