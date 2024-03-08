@@ -84,7 +84,7 @@ def set_initial_state(
     stability_pool = StabilityPool(stability_pool_balance)
 
     initial_state = {
-        "colleteral": collateral,
+        "collateral": collateral,
         "owners": owners,
         "stability_pool": stability_pool,
     }

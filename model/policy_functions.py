@@ -5,7 +5,7 @@ import numpy as np
 
 
 def p_coll_price(params, substep, state_history, previous_state):
-    updated_coll_price = jump_diffusion(previous_state["coll_price"], params)[-1]
+    updated_coll_price = jump_diffusion(previous_state["collateral"].price, params)[-1]
     return {"updated_coll_price": updated_coll_price}
 
 
@@ -20,7 +20,8 @@ def p_liquidation(params, substep, state_history, previous_state):
 
     for owner in owners:
         if (
-            owner.vault.debt_balance
+            owner.vault.collateral_balance > 0
+            and owner.vault.debt_balance
             / (owner.vault.collateral_balance * collateral.price)
             > liquidation_ratio
         ):
@@ -42,7 +43,7 @@ def p_vault_management(params, substep, state_history, previous_state):
     collateral = previous_state["collateral"]
 
     for owner in owners:
-        if not owner.blocked:
+        if not owner.vault.blocked:
             match owner.strategy:
                 case OwnerStrategy.RISKY:
                     modify_vault_via_active_strategy(
@@ -153,7 +154,7 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
         repay_amount = 0.4 * np.random.random() * owner.vault.debt_balance
         if repay_amount < owner.wallet.stable_coin_balance:
             owner.wallet.stable_coin_balance -= repay_amount
-            owner.vault.debt_position -= repay_amount
+            owner.vault.debt_balance -= repay_amount
         else:
-            owner.vault.debt_position -= owner.wallet.stable_coin_balance
+            owner.vault.debt_balance -= owner.wallet.stable_coin_balance
             owner.wallet.stable_coin_balance = 0

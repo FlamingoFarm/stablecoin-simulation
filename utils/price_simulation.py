@@ -51,8 +51,6 @@ def jump_diffusion(S, params, seed=None, num_paths=1, timesteps=1, delta_t=1 / 3
     a = params["jump_param_a"]
     b = params["jump_param_b"]
 
-    print(f"lambda: {lam}")
-
     # Set random seed
     np.random.seed(seed)
 
