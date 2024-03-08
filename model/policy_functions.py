@@ -1,4 +1,4 @@
-from model.state_variables import OwnerStrategy, Owners
+from model.state_variables import OwnerStrategy
 from utils.price_simulation import jump_diffusion
 
 import numpy as np
@@ -61,7 +61,10 @@ def p_vault_management(params, substep, state_history, previous_state):
                 case _:
                     raise ValueError("Not a valid strategy")
 
-    return {"updated_stability_pool": stability_pool, "updated_owners": owners}
+    return {
+        "updated_stability_pool_balance": stability_pool.stable_coin_balance,
+        "updated_owners": owners,
+    }
 
 
 ########################
