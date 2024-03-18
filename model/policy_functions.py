@@ -141,7 +141,7 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
     liquidation_ratio = params["liquidation_ratio"]
     max_loan = liquidation_ratio * owner.vault.collateral_balance * collateral.price
 
-    if np.random.random() < 0.5:
+    if np.random.random() < 0.4:
         # Take more loan
         if np.random.random() < 0.5:
             borrow_amount = (
@@ -162,7 +162,7 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
                 owner.vault.debt_balance -= owner.wallet.stable_coin_balance
                 owner.wallet.stable_coin_balance = 0
 
-    else:
+    elif np.random.random() < 0.7:
         # Add collateral
         if np.random.random() < 0.5:
             add_collateral_amount = (
@@ -173,11 +173,11 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
             owner.wallet.collateral_balance -= add_collateral_amount
         # Extract collateral
         else:
-            removing_collateral = (
+            removing_collateral_amount = (
                 0.8
                 * np.random.random()
                 * (max_loan - owner.vault.debt_balance)
                 / (liquidation_ratio * collateral.price)
             )
-            owner.vault.collateral_balance -= removing_collateral
-            owner.wallet.collateral_balance += removing_collateral
+            owner.vault.collateral_balance -= removing_collateral_amount
+            owner.wallet.collateral_balance += removing_collateral_amount
