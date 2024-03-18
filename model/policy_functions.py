@@ -164,7 +164,7 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
 
     else:
         # Add collateral
-        if np.random.random() < 0.4:
+        if np.random.random() < 0.5:
             add_collateral_amount = (
                 0.8 * np.random.random() * owner.wallet.collateral_balance
             )
@@ -172,7 +172,7 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
             owner.vault.collateral_balance += add_collateral_amount
             owner.wallet.collateral_balance -= add_collateral_amount
         # Extract collateral
-        elif np.random.random() < 0.4:
+        else:
             removing_collateral = (
                 0.8
                 * np.random.random()
