@@ -141,20 +141,43 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
     liquidation_ratio = params["liquidation_ratio"]
     max_loan = liquidation_ratio * owner.vault.collateral_balance * collateral.price
 
-    # Take more loan
     if np.random.random() < 0.5:
-        borrow_amount = 0.8 * np.random.random() * (max_loan - owner.vault.debt_balance)
-        fee_amount = params["stability_fee"] * borrow_amount
+        # Take more loan
+        if np.random.random() < 0.5:
+            borrow_amount = (
+                0.8 * np.random.random() * (max_loan - owner.vault.debt_balance)
+            )
+            fee_amount = params["stability_fee"] * borrow_amount
 
-        stability_pool.stable_coin_balance += fee_amount
-        owner.vault.debt_balance += borrow_amount
-        owner.wallet.stable_coin_balance += borrow_amount - fee_amount
-    # Repay part of loan
-    else:
-        repay_amount = 0.4 * np.random.random() * owner.vault.debt_balance
-        if repay_amount < owner.wallet.stable_coin_balance:
-            owner.wallet.stable_coin_balance -= repay_amount
-            owner.vault.debt_balance -= repay_amount
+            stability_pool.stable_coin_balance += fee_amount
+            owner.vault.debt_balance += borrow_amount
+            owner.wallet.stable_coin_balance += borrow_amount - fee_amount
+        # Repay part of loan
         else:
-            owner.vault.debt_balance -= owner.wallet.stable_coin_balance
-            owner.wallet.stable_coin_balance = 0
+            repay_amount = 0.4 * np.random.random() * owner.vault.debt_balance
+            if repay_amount < owner.wallet.stable_coin_balance:
+                owner.wallet.stable_coin_balance -= repay_amount
+                owner.vault.debt_balance -= repay_amount
+            else:
+                owner.vault.debt_balance -= owner.wallet.stable_coin_balance
+                owner.wallet.stable_coin_balance = 0
+
+    else:
+        # Add collateral
+        if np.random.random() < 0.4:
+            add_collateral_amount = (
+                0.8 * np.random.random() * owner.wallet.collateral_balance
+            )
+
+            owner.vault.collateral_balance += add_collateral_amount
+            owner.wallet.collateral_balance -= add_collateral_amount
+        # Extract collateral
+        elif np.random.random() < 0.4:
+            removing_collateral = (
+                0.8
+                * np.random.random()
+                * (max_loan - owner.vault.debt_balance)
+                / (liquidation_ratio * collateral.price)
+            )
+            owner.vault.collateral_balance -= removing_collateral
+            owner.wallet.collateral_balance += removing_collateral
