@@ -82,87 +82,91 @@ def modify_vault_via_active_strategy(
     debt_ratio = owner.vault.debt_balance / max_loan
     middle = (lower + upper) / 2
 
-    # Repay loan and if there is not enough stable coin in wallet, add collateral
-    if debt_ratio > upper:
-        if np.random.random() < 0.5:
-            # Calculates the amount of loan repayment to get a debt ratio of middle
-            loan_repayment = owner.vault.debt_balance - middle * max_loan
+    def repay_loan():
+        """Calculates the amount of loan repayment to get a debt ratio of middle. If there is not enough, add collateral."""
+        loan_repayment = owner.vault.debt_balance - middle * max_loan
 
-            if loan_repayment > owner.wallet.stable_coin_balance:
-                owner.vault.debt_balance -= owner.wallet.stable_coin_balance
-                owner.wallet.stable_coin_balance = 0
+        if loan_repayment > owner.wallet.stable_coin_balance:
+            owner.vault.debt_balance -= owner.wallet.stable_coin_balance
+            owner.wallet.stable_coin_balance = 0
 
-                # Calculates the amount of collateral that needs to be added to get a debt ratio of middle
-                add_collateral_amount = (
-                    owner.vault.debt_balance / middle - max_loan
-                ) / (liquidation_ratio * collateral.price)
-                if add_collateral_amount > owner.wallet.collateral_balance:
-                    owner.vault.collateral_balance += owner.wallet.collateral_balance
-                    owner.wallet.collateral_balance = 0
-                else:
-                    owner.vault.collateral_balance += add_collateral_amount
-                    owner.wallet.collateral_balance -= add_collateral_amount
-
-            else:
-                owner.wallet.stable_coin_balance -= loan_repayment
-                owner.vault.debt_balance -= loan_repayment
-
-        else:
-            # Calculates the amount of collateral that needs to be added to get a debt ratio of middle
             add_collateral_amount = (owner.vault.debt_balance / middle - max_loan) / (
                 liquidation_ratio * collateral.price
             )
             if add_collateral_amount > owner.wallet.collateral_balance:
                 owner.vault.collateral_balance += owner.wallet.collateral_balance
                 owner.wallet.collateral_balance = 0
-
-                # Calculates the amount of loan repayment to get a debt ratio of middle
-                loan_repayment = (
-                    owner.vault.debt_balance
-                    - middle
-                    * liquidation_ratio
-                    * owner.vault.collateral_balance
-                    * collateral.price
-                )
-                if loan_repayment > owner.wallet.stable_coin_balance:
-                    owner.vault.debt_balance -= owner.wallet.stable_coin_balance
-                    owner.wallet.stable_coin_balance = 0
-                else:
-                    owner.wallet.stable_coin_balance -= loan_repayment
-                    owner.vault.debt_balance -= loan_repayment
             else:
                 owner.vault.collateral_balance += add_collateral_amount
                 owner.wallet.collateral_balance -= add_collateral_amount
 
-    # Take more loan or remove collateral
-    if debt_ratio < lower:
-        borrow_propability = 0.7
-
-        # Take more loan
-        if np.random.random() < borrow_propability:
-            # Calculates the amount of how much loan can be taken to get a debt ratio of middle
-            borrow_amount = middle * max_loan - owner.vault.debt_balance
-
-            fee_amount = params["stability_fee"] * borrow_amount
-            spending_amount = (borrow_amount - fee_amount) * (
-                0.2 + 0.5 * np.random.random()
-            )
-
-            stability_pool.stable_coin_balance += fee_amount + spending_amount
-            owner.vault.debt_balance += borrow_amount
-            owner.wallet.stable_coin_balance += (
-                borrow_amount - fee_amount - spending_amount
-            )
-            owner.wallet.collateral_balance += spending_amount / collateral.price
-
-        # Remove collateral
         else:
-            # Calculates the amount of collateral that can to be removed to get a debt ratio of middle
-            removing_collateral = (max_loan - owner.vault.debt_balance / middle) / (
-                liquidation_ratio * collateral.price
+            owner.wallet.stable_coin_balance -= loan_repayment
+            owner.vault.debt_balance -= loan_repayment
+
+    def add_collateral():
+        """Calculates the amount of collateral that needs to be added to get a debt ratio of middle. If there is not enough, repay loan."""
+        add_collateral_amount = (owner.vault.debt_balance / middle - max_loan) / (
+            liquidation_ratio * collateral.price
+        )
+        if add_collateral_amount > owner.wallet.collateral_balance:
+            owner.vault.collateral_balance += owner.wallet.collateral_balance
+            owner.wallet.collateral_balance = 0
+
+            loan_repayment = (
+                owner.vault.debt_balance
+                - middle
+                * liquidation_ratio
+                * owner.vault.collateral_balance
+                * collateral.price
             )
-            owner.vault.collateral_balance -= removing_collateral
-            owner.wallet.collateral_balance += removing_collateral
+            if loan_repayment > owner.wallet.stable_coin_balance:
+                owner.vault.debt_balance -= owner.wallet.stable_coin_balance
+                owner.wallet.stable_coin_balance = 0
+            else:
+                owner.wallet.stable_coin_balance -= loan_repayment
+                owner.vault.debt_balance -= loan_repayment
+        else:
+            owner.vault.collateral_balance += add_collateral_amount
+            owner.wallet.collateral_balance -= add_collateral_amount
+
+    def take_loan():
+        """Calculates the amount of how much loan can be taken to get a debt ratio of middle."""
+        borrow_amount = middle * max_loan - owner.vault.debt_balance
+
+        fee_amount = params["stability_fee"] * borrow_amount
+        spending_amount = (borrow_amount - fee_amount) * (
+            0.2 + 0.5 * np.random.random()
+        )
+
+        stability_pool.stable_coin_balance += fee_amount + spending_amount
+        owner.vault.debt_balance += borrow_amount
+        owner.wallet.stable_coin_balance += borrow_amount - fee_amount - spending_amount
+        owner.wallet.collateral_balance += spending_amount / collateral.price
+
+    def remove_collateral():
+        """Calculates the amount of collateral that can to be removed to get a debt ratio of middle."""
+        removing_collateral = (max_loan - owner.vault.debt_balance / middle) / (
+            liquidation_ratio * collateral.price
+        )
+        owner.vault.collateral_balance -= removing_collateral
+        owner.wallet.collateral_balance += removing_collateral
+
+    if debt_ratio > upper:
+        repay_propability = 0.5
+
+        if np.random.random() < repay_propability:
+            repay_loan()
+        else:
+            add_collateral()
+
+    if debt_ratio < lower:
+        borrow_propability = 0.5
+
+        if np.random.random() < borrow_propability:
+            take_loan()
+        else:
+            remove_collateral()
 
 
 def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, params):
