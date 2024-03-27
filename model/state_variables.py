@@ -63,9 +63,7 @@ def set_initial_state(
 
     vault_coll_balance = 20 + 400 * np.random.random(num_owners)
     debt = (
-        0.1
-        + 0.8
-        * np.random.random(num_owners)
+        (0.5 + 0.4 * np.random.random(num_owners))
         * liquidation_ratio
         * initial_coll_price
         * vault_coll_balance

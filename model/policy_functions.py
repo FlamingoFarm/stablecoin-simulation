@@ -47,7 +47,7 @@ def p_vault_management(params, substep, state_history, previous_state):
             match owner.strategy:
                 case OwnerStrategy.RISKY:
                     modify_vault_via_active_strategy(
-                        owner, stability_pool, collateral, params, 0.8, 0.9
+                        owner, stability_pool, collateral, params, 0.85, 0.95
                     )
                 case OwnerStrategy.PASSIVE:
                     pass
