@@ -34,9 +34,9 @@ OwnerStrategy = Enum(
     "OwnerStrategy",
     [
         "RISKY",
+        "RISK_AVERSE",
         "PASSIVE",
         "IRRATIONAL",
-        "RISK_AVERSE",
     ],
 )
 
@@ -54,7 +54,10 @@ class Owners:
 
 
 def set_initial_state(
-    initial_coll_price: float, num_owners: int, liquidation_ratio: float
+    initial_coll_price: float,
+    num_owners: int,
+    liquidation_ratio: float,
+    strategy_distribution: List[float],
 ):
     collateral = Collateral(initial_coll_price)
 
@@ -76,7 +79,9 @@ def set_initial_state(
         for values in zip(wallet_coll_balance, wallet_stable_coin_balance)
     ]
 
-    strategies = np.random.choice(OwnerStrategy, num_owners)
+    strategies = np.random.choice(
+        a=OwnerStrategy, size=num_owners, p=strategy_distribution
+    )
 
     owners = [Owner(*values) for values in zip(vault_states, wallet_states, strategies)]
 
