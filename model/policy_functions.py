@@ -155,6 +155,7 @@ def modify_vault_via_active_strategy(
     if debt_ratio > upper:
         repay_propability = 0.5
 
+
         if np.random.random() < repay_propability:
             repay_loan()
         else:
@@ -219,3 +220,4 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
             add_collateral()
         else:
             remove_collateral()
+
