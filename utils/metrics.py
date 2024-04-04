@@ -14,3 +14,11 @@ def debt_collateral_ratio(owners, coll_price):
         debt += owner.vault.debt_balance
 
     return debt / collateral_value
+
+
+def liquidation_earnings(owners):
+    earnings = 0
+    for owner in owners:
+        earnings += owner.vault.liquidated_collateral - owner.vault.liquidated_debt
+
+    return earnings

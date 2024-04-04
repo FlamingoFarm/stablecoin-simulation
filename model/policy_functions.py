@@ -28,9 +28,12 @@ def p_liquidation(params, substep, state_history, previous_state):
             owner.vault.blocked = True
             if stability_pool_balance >= owner.vault.debt_balance:
                 stability_pool_balance -= owner.vault.debt_balance
+                owner.vault.liquidated_debt = owner.vault.debt_balance
+                owner.vault.liquidated_collateral = (
+                    owner.vault.collateral_balance * collateral.price
+                )
                 owner.vault.debt_balance = 0
                 owner.vault.collateral_balance = 0
-
     return {
         "updated_stability_pool_balance": stability_pool_balance,
         "updated_owners": owners,
@@ -155,7 +158,6 @@ def modify_vault_via_active_strategy(
     if debt_ratio > upper:
         repay_propability = 0.5
 
-
         if np.random.random() < repay_propability:
             repay_loan()
         else:
@@ -220,4 +222,3 @@ def modify_vault_via_irrational_strategy(owner, stability_pool, collateral, para
             add_collateral()
         else:
             remove_collateral()
-
