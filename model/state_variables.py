@@ -22,6 +22,8 @@ class Vault:
     # that means either the vault is fully liquidated or debt has not yet been fully paid due
     # to insufficient funds in the stability pool
     blocked: bool = False
+    liquidated_collateral: float = 0.0
+    liquidated_debt: float = 0.0
 
 
 @dataclass
